@@ -2,7 +2,8 @@
 
 # This program should do 3 things
 
-# Return the most popular 3 articles in the database and how many views they have.
+# Return the most popular 3 articles in the database
+#   and how many views they have.
 # Return the most popular authors and how many views they have.
 # Return the number of days where requests had an error rate of over 1%
 
@@ -11,6 +12,7 @@ import pprint as p
 import os
 
 DBNAME = 'news'
+
 
 def get_top_articles():
     db = psycopg2.connect(database=DBNAME)
@@ -24,6 +26,7 @@ def get_top_articles():
     results = c.fetchall()
     db.close()
     return results
+
 
 def get_top_authors():
     db = psycopg2.connect(database=DBNAME)
@@ -40,11 +43,15 @@ def get_top_authors():
     db.close()
     return results
 
+
 def get_error_rate():
     db = psycopg2.connect(database=DBNAME)
     c = db.cursor()
     c.execute("""select base.date::date, base.percent
-                 from (select e.date, e.errors, t.total, round(cast(((e.errors::float / t.total::float) * 100) as numeric),2) as percent
+                 from (select e.date, e.errors, t.total,
+                 round(cast(((e.errors::float / t.total::float) * 100)
+                 as numeric),2)
+                 as percent
                  from (select date(time) as date,count(*) as errors
                  from log
                  where status != '200 OK'
@@ -61,6 +68,7 @@ def get_error_rate():
     db.close()
     return results
 
+
 def main():
 
     # Get data
@@ -73,16 +81,18 @@ def main():
         os.remove('report.txt')
 
     # Open new file for report
-    report = open('report.txt','w')
+    report = open('report.txt', 'w')
     report.write("Most popular articles:\n")
     for i in range(len(articles)):
         report.write(articles[i][0] + " - " + str(articles[i][1]) + " views\n")
     report.write("\nMost popular authors:\n")
     for i in range(len(authors)):
-        report.write(authors[i][0] + " - " + str(authors[i][1]) + " total views\n")
+        report.write(authors[i][0] + " - " +
+                     str(authors[i][1]) + " total views\n")
     report.write("\nDays when 404 errors exceeded 1%:\n")
     for i in range(len(errors)):
         report.write(str(errors[i][0]) + " - " + str(errors[i][1]) + "%")
+
 
 if __name__ == '__main__':
     main()
