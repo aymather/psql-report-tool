@@ -8,7 +8,6 @@
 # Return the number of days where requests had an error rate of over 1%
 
 import psycopg2
-import pprint as p
 import os
 
 DBNAME = 'news'
