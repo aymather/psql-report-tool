@@ -14,40 +14,29 @@ import os
 DBNAME = 'news'
 
 
-def get_top_articles():
-    db = psycopg2.connect(database=DBNAME)
+def dbquery(QUERY):
+    try:
+        db = psycopg2.connect(database=DBNAME)
+    except:
+        print('Something went wrong connecting to your ' + {DBNAME} + ' database')
     c = db.cursor()
-    c.execute("""select articles.title, count(*) as views
-               from articles, log
-               where substring(log.path,10,100) = articles.slug
-               group by articles.title
-               order by views desc
-               limit 3""")
+    c.execute(QUERY)
     results = c.fetchall()
     db.close()
     return results
 
 
-def get_top_authors():
-    db = psycopg2.connect(database=DBNAME)
-    c = db.cursor()
-    c.execute("""select authors.name, sum(query.count) as views
-                  from authors,(select articles.author as id, count(*) as count
-                  from articles, log
-                  where substring(log.path,10,100) = articles.slug
-                  group by articles.id) as query
-                  where authors.id = query.id
-                  group by authors.name
-                  order by views desc""")
-    results = c.fetchall()
-    db.close()
-    return results
+def main():
 
+    # Establish psql queries
+    getArticles = """select articles.title, count(*) as views
+                    from articles, log
+                    where substring(log.path,10,100) = articles.slug
+                    group by articles.title
+                    order by views desc
+                    limit 3"""
 
-def get_error_rate():
-    db = psycopg2.connect(database=DBNAME)
-    c = db.cursor()
-    c.execute("""select base.date::date, base.percent
+    getErrors = """select base.date::date, base.percent
                  from (select e.date, e.errors, t.total,
                  round(cast(((e.errors::float / t.total::float) * 100)
                  as numeric),2)
@@ -63,18 +52,21 @@ def get_error_rate():
                  as t
                  where e.date = t.date) as base
                  where base.percent > 1;
-                 """)
-    results = c.fetchall()
-    db.close()
-    return results
+                 """
 
-
-def main():
+    getAuthors = """select authors.name, sum(query.count) as views
+                  from authors,(select articles.author as id, count(*) as count
+                  from articles, log
+                  where substring(log.path,10,100) = articles.slug
+                  group by articles.id) as query
+                  where authors.id = query.id
+                  group by authors.name
+                  order by views desc"""
 
     # Get data
-    articles = get_top_articles()
-    authors = get_top_authors()
-    errors = get_error_rate()
+    articles = dbquery(getArticles)
+    authors = dbquery(getAuthors)
+    errors = dbquery(getErrors)
 
     # If the report exists, remove it and start from scratch
     if os.path.exists('report.txt'):
