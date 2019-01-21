@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 # This program should do 3 things
 
 # Return the most popular 3 articles in the database and how many views they have.
