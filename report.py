@@ -17,15 +17,14 @@ DBNAME = 'news'
 def dbquery(QUERY):
     try:
         db = psycopg2.connect(database=DBNAME)
+        c = db.cursor()
+        c.execute(QUERY)
+        results = c.fetchall()
+        db.close()
+        return results
     except Exception as ex:
-        print('Something went wrong connecting to your ' +
-              DBNAME + ' database with exception: ')
+        print('Something went wrong with your query with exception:')
         print(ex)
-    c = db.cursor()
-    c.execute(QUERY)
-    results = c.fetchall()
-    db.close()
-    return results
 
 
 def main():
